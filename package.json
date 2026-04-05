@@ -1,0 +1,42 @@
+{
+  "name": "harness-exam",
+  "version": "0.1.0",
+  "description": "A benchmark exam for coding agents",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "harness-exam": "./bin/cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint src bin",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "prettier": "^3.0.0"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kunchenguid/harness-exam"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "benchmark",
+    "agent",
+    "coding",
+    "exam"
+  ]
+}
