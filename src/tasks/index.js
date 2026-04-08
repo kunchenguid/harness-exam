@@ -1,7 +1,12 @@
 import neovimReleaseNotes from "./01-rewrite-long-web-content.js";
 import zippedNovelReasoning from "./02-reason-over-zipped-novel.js";
+import incidentDashboard from "./03-investigate-client-side-incident-dashboard.js";
 
-export const tasks = [neovimReleaseNotes, zippedNovelReasoning];
+export const tasks = [
+  neovimReleaseNotes,
+  zippedNovelReasoning,
+  incidentDashboard,
+];
 
 export function resolveTaskSelection(taskSelection) {
   if (!taskSelection) {

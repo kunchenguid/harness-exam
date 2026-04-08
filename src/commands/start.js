@@ -6,7 +6,8 @@ import {
   appendFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { getSessionDir, createSession } from "../session.js";
+import { getSessionDir, createSession, saveSession } from "../session.js";
+import { startTask3Server } from "../task-3-server.js";
 import { resolveTaskSelection } from "../tasks/index.js";
 
 export default async function start({ task } = {}) {
@@ -20,7 +21,9 @@ export default async function start({ task } = {}) {
   const sessionDir = getSessionDir(cwd, session.sessionId);
 
   const firstTask = sessionTasks[0];
-  firstTask.setup(sessionDir);
+  const taskSetupOptions = await buildTaskSetupOptions(firstTask, session);
+  firstTask.setup(sessionDir, taskSetupOptions);
+  saveSession(sessionDir, session);
 
   const instructions = buildInstructions(
     session,
@@ -35,6 +38,11 @@ export default async function start({ task } = {}) {
   console.log();
   console.log(`Task 1 of ${sessionTasks.length}: ${firstTask.name}`);
   console.log(firstTask.description);
+  if (session.taskServer?.taskDir === firstTask.taskDir) {
+    console.log(
+      `Open this URL in your browser tools: ${session.taskServer.url}`,
+    );
+  }
   console.log();
   console.log(`When finished, run:`);
   console.log(
@@ -44,6 +52,19 @@ export default async function start({ task } = {}) {
 }
 
 function buildInstructions(session, firstTask, totalTasks) {
+  const taskSpecificInstructions =
+    firstTask.taskDir === "task-3" && session.taskServer
+      ? `
+## Browser Access
+
+This task must be solved by investigating the dashboard in a browser.
+
+Open this URL in your browser tools:
+
+    ${session.taskServer.url}
+`
+      : "";
+
   return `# Harness Exam
 
 Session: ${session.sessionId}
@@ -53,6 +74,7 @@ Version: ${session.version}
 
 ### Task 1 of ${totalTasks}: ${firstTask.name}
 ${firstTask.description}
+${taskSpecificInstructions}
 
 ## Submission
 
@@ -62,6 +84,17 @@ When you have completed the current task, run:
 
 Additional tasks, if any, will be provided after each submission.
 `;
+}
+
+async function buildTaskSetupOptions(task, session) {
+  if (task.taskDir !== "task-3") {
+    return {};
+  }
+
+  session.taskServer = await startTask3Server(
+    getSessionDir(process.cwd(), session.sessionId),
+  );
+  return { taskUrl: session.taskServer.url };
 }
 
 function addGitExclude(cwd) {

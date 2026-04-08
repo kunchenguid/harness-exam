@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Northstar Billing Incident Console</title>
+    <link rel="stylesheet" href="/task-3/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section
+        id="dashboard"
+        hx-get="/task-3/dashboard?tab=overview&region=all&sort=arr"
+        hx-trigger="task3:ready"
+        hx-target="this"
+        hx-swap="innerHTML"
+      >
+        <section class="panel content-panel">
+          <p class="eyebrow">Northstar Billing</p>
+          <h2>Loading dashboard...</h2>
+          <p class="panel-copy">
+            Initializing the browser session and loading the incident dashboard
+            from the local task server.
+          </p>
+        </section>
+      </section>
+      <div id="task-3-inspector"></div>
+      <aside id="chart-tooltip" class="tooltip tooltip-empty">
+        Hover or focus a rollout point to reveal deployment metadata.
+      </aside>
+    </div>
+    <script src="/task-3/htmx.min.js"></script>
+    <script src="/task-3/app.js"></script>
+  </body>
+</html>

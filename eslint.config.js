@@ -12,10 +12,14 @@ export default defineConfig(
         console: "readonly",
         process: "readonly",
         URL: "readonly",
+        URLSearchParams: "readonly",
       },
     },
   },
   {
-    ignores: ["node_modules/"],
+    ignores: [
+      "node_modules/",
+      "src/tasks/task-3-incident-dashboard/htmx.min.js",
+    ],
   },
 );

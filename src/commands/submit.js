@@ -1,6 +1,9 @@
+/* global fetch */
+
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getSessionDir, loadSession, saveSession } from "../session.js";
+import { startTask3Server, stopTask3Server } from "../task-3-server.js";
 import { getSessionTasks } from "../tasks/index.js";
 import { generateScorecard } from "../scorecard.js";
 
@@ -31,7 +34,19 @@ export default async function submit({ session: sessionId, agent }) {
   }
 
   const task = sessionTasks[taskIndex];
-  const result = await task.grade(sessionDir);
+  const browserProof =
+    task.taskDir === "task-3" && session.taskServer
+      ? await readTask3BrowserProof(session.taskServer)
+      : null;
+  let result;
+  try {
+    result = await task.grade(sessionDir, { browserProof });
+  } finally {
+    if (task.taskDir === "task-3" && session.taskServer) {
+      await stopTask3Server(session.taskServer);
+      delete session.taskServer;
+    }
+  }
 
   const sessionResult = {
     task: taskIndex + 1,
@@ -43,6 +58,23 @@ export default async function submit({ session: sessionId, agent }) {
   }
   session.results.push(sessionResult);
   session.currentTask += 1;
+
+  if (session.currentTask <= sessionTasks.length) {
+    const nextTask = sessionTasks[session.currentTask - 1];
+    const taskSetupOptions = await buildTaskSetupOptions(
+      nextTask,
+      session,
+      sessionDir,
+    );
+    nextTask.setup(sessionDir, taskSetupOptions);
+    writeInstructions(sessionDir, session, nextTask, sessionTasks.length);
+  } else {
+    writeFileSync(
+      join(sessionDir, "instructions.md"),
+      buildCompletionInstructions(session),
+    );
+  }
+
   saveSession(sessionDir, session);
 
   // Update scorecard and results
@@ -65,13 +97,17 @@ export default async function submit({ session: sessionId, agent }) {
 
   if (session.currentTask <= sessionTasks.length) {
     const nextTask = sessionTasks[session.currentTask - 1];
-    nextTask.setup(sessionDir);
 
     console.log();
     console.log(
       `Task ${session.currentTask} of ${sessionTasks.length}: ${nextTask.name}`,
     );
     console.log(nextTask.description);
+    if (session.taskServer?.taskDir === nextTask.taskDir) {
+      console.log(
+        `Open this URL in your browser tools: ${session.taskServer.url}`,
+      );
+    }
     console.log();
     console.log(`When finished, run:`);
     console.log(
@@ -82,5 +118,78 @@ export default async function submit({ session: sessionId, agent }) {
     console.log("Exam complete.");
     console.log(`Scorecard: ${join(sessionDir, "scorecard.svg")}`);
     console.log(`Results: ${join(sessionDir, "results.json")}`);
+  }
+}
+
+async function buildTaskSetupOptions(task, session, sessionDir) {
+  if (task.taskDir !== "task-3") {
+    return {};
+  }
+
+  session.taskServer = await startTask3Server(sessionDir);
+  return { taskUrl: session.taskServer.url };
+}
+
+function writeInstructions(sessionDir, session, task, totalTasks) {
+  writeFileSync(
+    join(sessionDir, "instructions.md"),
+    `# Harness Exam
+
+Session: ${session.sessionId}
+Version: ${session.version}
+
+## Current Task
+
+### Task ${session.currentTask} of ${totalTasks}: ${task.name}
+${task.description}
+${
+  task.taskDir === "task-3" && session.taskServer
+    ? `
+## Browser Access
+
+This task must be solved by investigating the dashboard in a browser.
+
+Open this URL in your browser tools:
+
+    ${session.taskServer.url}
+`
+    : ""
+}
+
+## Submission
+
+When you have completed the current task, run:
+
+    harness-exam submit --session ${session.sessionId} --agent "${session.agent}"
+
+Additional tasks, if any, will be provided after each submission.
+`,
+  );
+}
+
+function buildCompletionInstructions(session) {
+  return `# Harness Exam
+
+Session: ${session.sessionId}
+Version: ${session.version}
+
+## Status
+
+Exam complete.
+`;
+}
+
+async function readTask3BrowserProof(taskServer) {
+  try {
+    const response = await fetch(
+      new URL("/task-3/browser-proof", taskServer.url),
+    );
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch {
+    return null;
   }
 }

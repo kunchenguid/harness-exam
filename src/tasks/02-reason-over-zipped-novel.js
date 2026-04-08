@@ -53,6 +53,7 @@ Use this shape:
 - \`answer\` must explain Rainford's true status, Charles's apparent claim, and the later fact that defeats that claim.
 - \`evidence\` must contain at least 4 citations.
 - Your citations must include chapter ids from both \`v3\` and \`v4\`.
+- Include the key supporting chapters that establish Rainford's status, Charles's apparent claim, and the fact that defeats it.
 - Use the chapter ids shipped in the archive.
 `;
 
@@ -81,23 +82,11 @@ const REQUIRED_ANSWER_MARKERS = [
   },
 ];
 
-const REQUIRED_EVIDENCE = [
-  {
-    chapterId: "v3-ch084",
-    markers: ["elder", "legitimate"],
-  },
-  {
-    chapterId: "v4-ch017",
-    markers: ["octavia manners", "marriage certificate"],
-  },
-  {
-    chapterId: "v4-ch029",
-    markers: ["viscount marston", "heir"],
-  },
-  {
-    chapterId: "v4-ch043",
-    markers: ["born in wedlock", "illegitimate"],
-  },
+const REQUIRED_EVIDENCE_CHAPTERS = [
+  "v3-ch084",
+  "v4-ch017",
+  "v4-ch029",
+  "v4-ch043",
 ];
 
 export default {
@@ -180,7 +169,6 @@ export async function gradeMysteriesOfLondonAnswer(workspaceDir) {
         typeof item.chapterId === "string"
           ? item.chapterId.trim().toLowerCase()
           : "",
-      detail: typeof item.detail === "string" ? normalizeText(item.detail) : "",
     }));
 
   const citedVolumes = new Set(
@@ -192,14 +180,12 @@ export async function gradeMysteriesOfLondonAnswer(workspaceDir) {
     failures.push("Evidence must cite chapters from both v3 and v4.");
   }
 
-  const missingEvidence = REQUIRED_EVIDENCE.filter(({ chapterId, markers }) => {
-    const citation = normalizedEvidence.find(
-      (item) => item.chapterId === chapterId,
-    );
-    return (
-      !citation || !markers.some((marker) => citation.detail.includes(marker))
-    );
-  }).map(({ chapterId }) => chapterId);
+  const citedChapterIds = new Set(
+    normalizedEvidence.map((item) => item.chapterId).filter(Boolean),
+  );
+  const missingEvidence = REQUIRED_EVIDENCE_CHAPTERS.filter(
+    (chapterId) => !citedChapterIds.has(chapterId),
+  );
   if (missingEvidence.length > 0) {
     failures.push(
       `Evidence is missing key chapter support: ${missingEvidence.join(", ")}.`,

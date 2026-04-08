@@ -1,2 +1,3 @@
 node_modules
 .harness-exam
+src/tasks/task-3-incident-dashboard/htmx.min.js

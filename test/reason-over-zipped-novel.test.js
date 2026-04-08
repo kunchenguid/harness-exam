@@ -41,6 +41,41 @@ test("gradeMysteriesOfLondonAnswer accepts a complete answer with citations", as
   assert.equal(result.pass, true);
 });
 
+test("gradeMysteriesOfLondonAnswer accepts required chapter citations without semantic detail matching", async () => {
+  const workspaceDir = mkdtempSync(join(tmpdir(), "harness-exam-task-"));
+  const answer = buildCandidateAnswer();
+  answer.evidence = answer.evidence.map((item) => ({
+    chapterId: item.chapterId,
+    detail: "Relevant chapter citation.",
+  }));
+
+  writeFileSync(
+    join(workspaceDir, "task-2-answer.json"),
+    JSON.stringify(answer, null, 2),
+  );
+
+  const result = await gradeMysteriesOfLondonAnswer(workspaceDir);
+
+  assert.equal(result.pass, true);
+});
+
+test("gradeMysteriesOfLondonAnswer still rejects an incorrect title explanation", async () => {
+  const workspaceDir = mkdtempSync(join(tmpdir(), "harness-exam-task-"));
+  const answer = buildCandidateAnswer();
+  answer.answer =
+    "Thomas Rainford is only a distant relation, while Charles Hatfield permanently inherits the Ellingham title because the family documents confirm him as the rightful and legitimate heir to the earldom after Arthur falls away from the line of succession.";
+
+  writeFileSync(
+    join(workspaceDir, "task-2-answer.json"),
+    JSON.stringify(answer, null, 2),
+  );
+
+  const result = await gradeMysteriesOfLondonAnswer(workspaceDir);
+
+  assert.equal(result.pass, false);
+  assert.match(result.message, /required ideas/i);
+});
+
 function buildCandidateAnswer() {
   return {
     answer:
