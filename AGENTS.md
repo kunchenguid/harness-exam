@@ -38,3 +38,14 @@ The `.harness-exam/` directory is added to `.git/info/exclude` automatically so 
 ## Style
 
 - ESM (`"type": "module"`) — use `import`/`export`, not `require`.
+
+## Release CI
+
+- PR workflows ignore the release-please output set (`.release-please-manifest.json`, `CHANGELOG.md`, `package.json`, `package-lock.json`) via `pull_request.paths-ignore` so pure release PRs create zero runs. Keep that set in sync: `scripts/check-release-ci-exclusions.sh` (early step in `ci.yml`) derives expected paths from `release-please-config.json` and fails if any `pull_request` workflow is missing one.
+
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.
