@@ -1,3 +1,5 @@
 node_modules
 .harness-exam
 src/tasks/task-3-incident-dashboard/htmx.min.js
+# Canonical two-line @AGENTS.md pointer; prettier would add a blank line.
+CLAUDE.md
